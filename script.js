@@ -153,10 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }).then(res => res.json());
     };
 
-    // Разделяем на 2 языка
-    const messages = [buildMessage('ru'), buildMessage('en')];
-
-    // Разделение на части, если длиннее 4096 символов
+    // Разделение длинного текста на части и отправка
     const sendAllParts = async (text) => {
       let start = 0;
       while (start < text.length) {
@@ -179,9 +176,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     (async () => {
       try {
-        for (const msg of messages) {
-          await sendAllParts(msg);
-        }
+        // Отправляем по одному разу на каждый язык
+        await sendAllParts(buildMessage('ru'));
+        await sendAllParts(buildMessage('en'));
+
         alert('✅ Чеклист отправлен!');
         localStorage.clear();
         clearForm();

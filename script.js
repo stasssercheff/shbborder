@@ -89,9 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('input', saveFormData);
   });
 
-  // === Функция сборки сообщения ===
+  // === Функция сборки сообщения === (отправляет только выбранное)
   const buildMessage = (lang) => {
-    let message = `🧾 <b>${lang === 'en' ? 'To buy' : 'Закупка'}</b>\n\n`;
+    let message = `🧾 <b>${lang === 'en' ? 'Checklist' : 'Чеклист'}</b>\n\n`;
 
     // Дата
     message += `📅 ${lang === 'en' ? 'Date' : 'Дата'}: ${formattedDate}\n`;
@@ -106,35 +106,30 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.menu-section').forEach(section => {
       const sectionTitle = section.querySelector('.section-title');
       const title = sectionTitle?.dataset[lang] || '';
-      message += `🔸 <b>${title}</b>\n`;
+      let sectionContent = '';
 
       section.querySelectorAll('.dish').forEach(dish => {
         const select = dish.querySelector('select.qty');
+        if (!select || !select.value) return; // пропуск, если ничего не выбрано
+
         const label = dish.querySelector('label.check-label');
+        const labelText = select?.dataset[`label${lang.toUpperCase()}`] || label?.dataset[lang] || '—';
+        const selectedOption = select.options[select.selectedIndex];
+        const value = selectedOption?.dataset[lang] || '—';
 
-        let labelText = '—';
-        let value = '—';
-
-        if (label) {
-          labelText = select?.dataset[`label${lang.toUpperCase()}`] || label.dataset[lang] || '—';
-        }
-
-        if (select) {
-          const selectedOption = select.options[select.selectedIndex];
-          value = selectedOption?.dataset[lang] || '—';
-        }
-
-        message += `• ${labelText}: ${value}\n`;
+        sectionContent += `• ${labelText}: ${value}\n`;
       });
 
       // Комментарий
       const nextBlock = section.nextElementSibling;
       const commentField = nextBlock?.querySelector('textarea.comment');
       if (commentField && commentField.value.trim()) {
-        message += `💬 ${lang === 'en' ? 'Comment' : 'Комментарий'}: ${commentField.value.trim()}\n`;
+        sectionContent += `💬 ${lang === 'en' ? 'Comment' : 'Комментарий'}: ${commentField.value.trim()}\n`;
       }
 
-      message += `\n`;
+      if (sectionContent.trim()) {
+        message += `🔸 <b>${title}</b>\n` + sectionContent + '\n';
+      }
     });
 
     return message;
@@ -174,12 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Функция очистки формы
     const clearForm = () => {
-      // Сброс всех селектов в пустое значение (выбирает первый пустой option)
       document.querySelectorAll('select').forEach(select => {
         select.value = '';
       });
-
-      // Очистка всех textarea с классом comment
       document.querySelectorAll('textarea.comment').forEach(textarea => {
         textarea.value = '';
       });
@@ -191,8 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
           await sendAllParts(msg);
         }
         alert('✅ Чеклист отправлен!');
-        localStorage.clear(); // сброс локального хранилища
-        clearForm();          // очистка формы визуально
+        localStorage.clear();
+        clearForm();
       } catch (err) {
         alert('❌ Ошибка при отправке: ' + err.message);
         console.error(err);
